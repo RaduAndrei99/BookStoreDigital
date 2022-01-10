@@ -1,0 +1,71 @@
+{
+    "openapi" : "3.0.0",
+    "info" : {
+        "version" : "1.0.0",
+        "title" : "Books",
+        "description" : "This API eExposes complete information regarding to the accessible book type resources."
+    },
+    "servers" : [
+        {"url" : "http://127.0.0.1:5000/"}
+    ],
+    "paths": {
+        "/api/bookcollection/books/{ISBN}/" : {
+            "get" : {
+                "summary" : "Get a book",
+                "description" : "Returns the info for the book identified by the ISBN query parameter.",
+                "parameters" : [{
+                    "name" : "ISBN",
+                    "in" : "path",
+                    "required" : true,
+                    "schema" : {
+                        "type" : "string"
+                    }
+                }],
+                "responses" : {
+                    "200" : {
+                        "description" : "Successful response.",
+                        "content" : {
+                            "text/html" : {
+                                "schema" : {
+                                    "type" : "object",
+                                    "properties" : {
+                                        
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500" : {
+                        "description" : "Unknown server error."
+                    }
+                }
+            },
+            "post" : {
+                "summary" : "Adds a book",
+                "description" : "Adds a book to the backend database..",
+                "parameters" : [{
+                    "name" : "ISBN",
+                    "in" : "path",
+                    "required" : true,
+                    "schema" : {
+                        "type" : "string"
+                    }
+                }],
+                "responses" : {
+                    "200" : {
+                        "description" : "Successful response.",
+                        "content" : {
+                           
+                        }
+                    },
+                    "500" : {
+                        "description" : "Unknown server error.",
+                        "content" : {
+
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

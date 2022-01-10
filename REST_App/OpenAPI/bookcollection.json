@@ -1,0 +1,20 @@
+{
+    "openapi" : "3.0.0",
+    "info" : {
+        "version" : "1.0.0",
+        "title" : "Book collection",
+        "description" : "This API exposes the complete information about the resources and facilities offered for these resources."
+    },
+    "servers" : [
+        {"url" : "http://127.0.0.1:5000/api/"}
+    ],
+    "paths": {
+        "/api/bookcollection/books" : {
+            "summary" : "Exposes complete information regarding to the accessible book type resources."
+        },
+        "/api/bookcollection/authors" :  { 
+            "summary" :"Exposes the complete information relative to the accessible author type resources." 
+        }
+    }
+  
+}
