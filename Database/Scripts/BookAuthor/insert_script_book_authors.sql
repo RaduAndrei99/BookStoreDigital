@@ -17,12 +17,12 @@ INSERT INTO autor (prenume, nume) VALUES ("Michelle", "Obama");
 INSERT INTO autor (prenume, nume) VALUES ("Mihai", "Morar");
 INSERT INTO autor (prenume, nume) VALUES ("Constantin", "Necula");
 
-INSERT INTO carte_la_stoc(id_carte, stoc) VALUES ((SELECT id_carte FROM carte WHERE isbn = "9789734648887"), 51);
-INSERT INTO carte_la_stoc(id_carte, stoc) VALUES ((SELECT id_carte FROM carte WHERE isbn = "9789734671991"), 55);
-INSERT INTO carte_la_stoc(id_carte, stoc) VALUES ((SELECT id_carte FROM carte WHERE isbn = "9786066096133"), 15);
-INSERT INTO carte_la_stoc(id_carte, stoc) VALUES ((SELECT id_carte FROM carte WHERE isbn = "9786060065647"), 25);
-INSERT INTO carte_la_stoc(id_carte, stoc) VALUES ((SELECT id_carte FROM carte WHERE isbn = "9786063332586"), 21);
-INSERT INTO carte_la_stoc(id_carte, stoc) VALUES ((SELECT id_carte FROM carte WHERE isbn = "9786069748534"), 100);
+INSERT INTO carte_la_stoc(id_carte, stoc, pret) VALUES ((SELECT id_carte FROM carte WHERE isbn = "9789734648887"), 51, 55.2);
+INSERT INTO carte_la_stoc(id_carte, stoc, pret) VALUES ((SELECT id_carte FROM carte WHERE isbn = "9789734671991"), 55, 60.5);
+INSERT INTO carte_la_stoc(id_carte, stoc, pret) VALUES ((SELECT id_carte FROM carte WHERE isbn = "9786066096133"), 15, 78.1);
+INSERT INTO carte_la_stoc(id_carte, stoc, pret) VALUES ((SELECT id_carte FROM carte WHERE isbn = "9786060065647"), 25, 89);
+INSERT INTO carte_la_stoc(id_carte, stoc, pret) VALUES ((SELECT id_carte FROM carte WHERE isbn = "9786063332586"), 21, 56);
+INSERT INTO carte_la_stoc(id_carte, stoc, pret) VALUES ((SELECT id_carte FROM carte WHERE isbn = "9786069748534"), 100, 45);
 
 INSERT INTO carte_la_autor(id_carte, id_autor, autor_index) VALUES ((SELECT id_carte from CARTE where isbn="9789734648887"), 
 (SELECT id_autor FROM autor WHERE nume="Harari" AND prenume="Yuval Noah"), 1);

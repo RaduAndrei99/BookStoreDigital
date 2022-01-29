@@ -26,7 +26,8 @@ CREATE TABLE IF NOT EXISTS carte_la_stoc(
 	id_stoc INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
 	id_carte INT NOT NULL,
 	stoc INT NOT NULL,
-
+	pret FLOAT NOT NULL,
+	
 	FOREIGN KEY (id_carte) 
         REFERENCES carte(id_carte)
 );

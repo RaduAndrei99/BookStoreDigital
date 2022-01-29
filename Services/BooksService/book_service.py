@@ -6,7 +6,7 @@ class BookService:
         self.__mysql_db = MySQLBookStoreDB( "db_manager", "1991129_man")
 
     def add_book(self, isbn):
-        self.__mysql_db.create_book(isbn)
+        self.__mysql_db.store_book(isbn)
     
     def get_books(self, isbn, verbose):
         return self.__mysql_db.get_books(isbn, verbose)
@@ -20,5 +20,10 @@ class BookService:
     def get_author_by_isbn(self, isbn):
         return self.__mysql_db.get_author_by_isbn(isbn)
 
-    def verify_book_stock(self, isbn):
-        return self.__mysql_db.is_book_available(isbn)
+    def verify_book_stock(self, list_of_books):
+        return self.__mysql_db.is_book_available(list_of_books)
+
+    def get_book_details(self, isbn):
+        #pentru a lua denumirile 
+        
+        return self.__mysql_db.get_book_details(isbn)

@@ -1,7 +1,8 @@
 import json
 from datetime import datetime
 class Order(object):
-    def __init__(self, items, status):
+    def __init__(self, user_id, items, status):
+        self.user_id = user_id
         self.data = str(datetime.now())
         self.items = items
         self.status = status

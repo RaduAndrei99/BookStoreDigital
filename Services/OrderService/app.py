@@ -24,47 +24,38 @@ cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 order_service = OrderService()
 
-#voi folosi aceasta functia ca decorator pentru a proteja resursele care au nevoie de autentificare
-def token_required(f):
-    @wraps(f)
-    def decorated(*args, **kwargs):
-        try: 
-          token = None
-          #token = request.get_json()['token']
-
-          if 'Authorization' in request.headers:
-            token = request.headers['Authorization'].split()[1]
-            print(token)
-
-            user_acces = Client('http://localhost:7789/?wsdl')
-
-            status_code = user_acces.service.validate_token(token)
-
-            if status_code == 404:
-              return jsonify({'message' : 'Token-ul este invalid!'}), 401
-          else:
-            return jsonify({'message' : 'Token-ul lipseste!'}), 401
-        except Exception as e:
-          print("nasol")
-          print(e)
-          return jsonify({'message' : 'Eroare la validarea token-ului!'}), 401
-
-        return f(*args, **kwargs)
-
-    return decorated
-
 @app.route('/api/order/add-order', methods=['POST'])
-@token_required
 def add_order():
   try:
     data = request.get_json()
-    print(data)
     order_obj = Order(**data)
-    if order_service.add_order(order_obj):
-      return make_response('Comanda a fost plasata cu succes!', 201)
-    else:
-      return make_response('Comanda nu a fost plasata!', 405)
 
+    # token = request.headers['Authorization'].split()[1]
+    # user_acces = Client('http://localhost:7789/?wsdl')
+    # #remote procedure call petru a verifica daca pot adauga aceasta comanda
+    # response = user_acces.service.verify_authority(token, order_obj.user_id)
+
+    #if response[1] == 200:
+    res = order_service.add_order(order_obj)
+    return res, 201
+   
+  except Exception as e:
+    print(e)
+    return "Eroare!", 500
+
+@app.route('/api/order/get-orders/<USER_ID>', methods=['GET'])
+def get_orders(USER_ID):
+  try:
+
+    # token = request.headers['Authorization'].split()[1]
+    # user_acces = Client('http://localhost:7789/?wsdl')
+    # #remote procedure call petru a verifica daca pot adauga aceasta comanda
+    # response = user_acces.service.verify_authority(token, USER_ID)
+    res = order_service.get_orders(USER_ID)
+    print(res)
+
+
+    return jsonify(res), 201 
   except Exception as e:
     print(e)
     return "Eroare!", 500

@@ -3,13 +3,17 @@
 from DTOs.book import Book
 from DTOs.author import Author
 from DTOs.book_to_author import BookToAuthor
+from DTOs.list_of_books import ListOfBooks
+from DTOs.user_credentials import UserCredentials
+
+from Database.Exceptions.exceptions import EmailAlreadyExistsException, EmailNotFoundException, BookNotFoundException, OutOfStockException
 
 import mysql.connector
 
 import json
 
 class MySQLBookStoreDB():
-    __HOST = '127.0.0.1'
+    __HOST = '127.0.0.1' 
     __DATABASE = 'book_store'
     __CONNECT_TIMEOUT = 5
 
@@ -90,6 +94,29 @@ class MySQLBookStoreDB():
         self.__db_connection.commit()
 
     def delete_book(self, isbn):
+
+        sql_statement = "DELETE FROM carte_la_stoc WHERE id_carte=(SELECT id_carte FROM carte WHERE isbn=%s)"
+
+        val = []
+        val.append(isbn)
+        
+        db_cursor = self.__db_connection.cursor()
+
+        db_cursor.execute(sql_statement, val)
+        self.__db_connection.commit()
+ 
+
+        sql_statement = "DELETE FROM carte_la_autor WHERE id_carte=(SELECT id_carte FROM carte WHERE isbn=%s)"
+
+        val = []
+        val.append(isbn)
+        
+        db_cursor = self.__db_connection.cursor()
+
+        db_cursor.execute(sql_statement, val)
+        self.__db_connection.commit()
+
+
         sql_statement = "DELETE FROM carte WHERE isbn=%s"
 
         val = []
@@ -228,29 +255,229 @@ class MySQLBookStoreDB():
 
         db_cursor.execute(sql_statement, val)
     
-    def is_book_available(self, isbn):
-        sql_statement = "SELECT stoc FROM carte_la_stoc WHERE id_carte=(SELECT id_carte FROM carte WHERE isbn=%s)"
+    def is_book_available(self, list_of_books: ListOfBooks):
+        for book in list_of_books.books:
+            isbn = book['isbn']
+            quantity = book['cantitate']
+
+            sql_statement = "SELECT stoc FROM carte_la_stoc WHERE id_carte=(SELECT id_carte FROM carte WHERE isbn=%s)"
+            val = []
+            val.append(isbn)
+        
+            db_cursor = self.__db_connection.cursor()
+
+            db_cursor.execute(sql_statement, val)
+            res = db_cursor.fetchall()
+            if len(res) == 0: 
+                self.__db_connection.rollback()
+                raise BookNotFoundException("Cartea cu isbn-ul " + str(isbn) + " nu exista!")
+
+            stoc = res[0][0]
+
+            if stoc - quantity >= 0:
+                sql_statement = "UPDATE carte_la_stoc SET stoc=%s WHERE id_carte=(SELECT id_carte FROM carte WHERE isbn=%s)"
+                val = []
+                val.append(str(stoc - quantity))
+                val.append(isbn)
+
+                db_cursor = self.__db_connection.cursor()
+
+                db_cursor.execute(sql_statement, val)
+            else:
+                self.__db_connection.rollback()
+                raise OutOfStockException("Cartea cu isbn-ul " + str(isbn) + " nu mai este in stock sau stock-ul nu este suficient!")
+
+        self.__db_connection.commit()
+
+
+    def create_user(self, email, password):
+        sql_statement = "SELECT * FROM user where email=%s"
+
+        val = []
+        val.append(email)
+
+        db_cursor = self.__db_connection.cursor()
+
+        db_cursor.execute(sql_statement, val)
+
+        res = db_cursor.fetchall()
+        if len(res) > 0:
+            raise EmailAlreadyExistsException("Email-ul deja exista in baza de date!")
+
+
+        sql_statement = "INSERT INTO user (email, user_password, id_role) VALUES ( %s, %s, (SELECT id_role from user_role WHERE role_name=\"client\"))"
+
+        val = []
+        val.append(email)
+        val.append(password)
+
+        db_cursor = self.__db_connection.cursor()
+
+        db_cursor.execute(sql_statement, val)
+
+        self.__db_connection.commit()
+
+
+
+    def delete_user(self, email):
+        sql_statement = "SELECT * FROM user where email=%s"
+
+        val = []
+        val.append(email)
+
+        db_cursor = self.__db_connection.cursor()
+
+        db_cursor.execute(sql_statement, val)
+
+        res = db_cursor.fetchall()
+        if len(res) == 0:
+            raise EmailNotFoundException("Email-ul introdus nu exista!")
+
+        sql_statement = "DELETE FROM user WHERE email=%s"
+
+        val = []
+        val.append(email)
+        
+        db_cursor = self.__db_connection.cursor()
+
+        db_cursor.execute(sql_statement, val)
+        self.__db_connection.commit()
+
+
+    def verify_user(self, email, password):
+        sql_statement = "SELECT * FROM user where email=%s"
+
+        val = []
+        val.append(email)
+
+        db_cursor = self.__db_connection.cursor()
+
+        db_cursor.execute(sql_statement, val)
+
+        res = db_cursor.fetchall()
+        if len(res) == 0:
+            return False
+        else:         
+            print(res)
+            if( res[0][2] == password):
+                return True
+            else:
+                return False 
+
+    def change_password(self, email, new_password):
+        sql_statement = "SELECT * FROM user where email=%s"
+
+        val = []
+        val.append(email)
+
+        db_cursor = self.__db_connection.cursor()
+
+        db_cursor.execute(sql_statement, val)
+
+        res = db_cursor.fetchall()
+        if len(res) == 0:
+            raise EmailNotFoundException("Email-ul introdus nu exista!")
+            
+        sql = "UPDATE user SET user_password=%s WHERE email=%s"
+        val = []
+        val.append(new_password)
+        val.append(email)
+
+            
+        db_cursor = self.__db_connection.cursor()
+
+        db_cursor.execute(sql, val)
+
+        self.__db_connection.commit()
+    
+    def update_user_role(self, email, new_id):
+        sql = "UPDATE user SET id_role=%s WHERE email=%s"
+        val = []
+        val.append(new_id)
+        val.append(email)
+
+            
+        db_cursor = self.__db_connection.cursor()
+
+        db_cursor.execute(sql, val)
+
+        self.__db_connection.commit()
+
+    def get_user_id(self, email):
+        sql_statement = "SELECT * FROM user where email=%s"
+
+        val = []
+        val.append(email)
+
+        db_cursor = self.__db_connection.cursor()
+
+        db_cursor.execute(sql_statement, val)
+
+        res = db_cursor.fetchall()
+        if len(res) == 0:
+            raise EmailNotFoundException("Email-ul introdus nu exista!")
+        else:         
+            return res[0][0]
+
+    def get_user_role(self, email):
+        sql_statement = "SELECT role_name FROM user_role WHERE id_role=(SELECT id_role FROM user WHERE email=%s)"
+
+        val = []
+        val.append(email)
+
+        db_cursor = self.__db_connection.cursor()
+
+        db_cursor.execute(sql_statement, val)
+
+        res = db_cursor.fetchall()
+        if len(res) == 0:
+            raise EmailNotFoundException("Email-ul introdus nu exista!")
+        else:         
+            return res[0][0]
+
+    def blakclist_jwt(self, jwt):
+        sql_statement = "INSERT INTO jwt_blacklist(blacklisted_jwt) VALUES (%s)"
+
+        val = []
+        val.append(jwt)
+
+        db_cursor = self.__db_connection.cursor()
+
+        db_cursor.execute(sql_statement, val)
+
+        self.__db_connection.commit()
+
+    def get_book_details(self, isbn):
+        ret = []
+
+        sql_statement = "SELECT * FROM carte WHERE isbn=%s"
+
         val = []
         val.append(isbn)
-    
+
+        db_cursor = self.__db_connection.cursor()
+
+        db_cursor.execute(sql_statement, val)
+
+        res = db_cursor.fetchall()
+        if len(res) == 0:
+            raise BookNotFoundException("Cartea cu isbn-ul " + str(isbn) + " nu exista!")
+        
+        for it in res[0]:
+            ret.append(it)
+
+
+        sql_statement = "SELECT * FROM carte_la_stoc WHERE id_carte=%s"
+
+        val = []
+        val.append(res[0][0])
+
         db_cursor = self.__db_connection.cursor()
 
         db_cursor.execute(sql_statement, val)
         res = db_cursor.fetchall()
-        stoc = res[0][0]
 
-        if stoc > 0:
-            sql_statement = "UPDATE carte_la_stoc SET stoc=%s WHERE id_carte=(SELECT id_carte FROM carte WHERE isbn=%s)"
-            val = []
-            val.append(str(stoc-1))
-            val.append(isbn)
+        ret.append(res[0][3])
 
-            db_cursor = self.__db_connection.cursor()
-
-            db_cursor.execute(sql_statement, val)
-            self.__db_connection.commit()
-
-            return True
-        else:
-            return False
+        return ret
 

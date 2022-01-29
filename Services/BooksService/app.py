@@ -11,10 +11,16 @@ import json
 from flask_cors import CORS
 from Database.mysql_database import MySQLBookStoreDB
 from DTOs.book import Book
+from DTOs.list_of_books import ListOfBooks
+
 from DTOs.author import Author
 from DTOs.book_to_author import BookToAuthor
 from Services.BooksService.book_service import BookService
- 
+
+from Database.Exceptions.exceptions import OutOfStockException, BookNotFoundException
+
+
+#parola pentru conexiunea la baza de date se ia dintr-un fisier local 
 f = open("../../Passwords/mysql.txt", "r")
 mysql_db = MySQLBookStoreDB( "db_manager", f.readline())
 
@@ -59,10 +65,10 @@ def books_route_post():
 
     book_service.add_book(book_obj)
 
-    return "Carte inserata cu succes!", 201
+    return jsonify("Carte inserata cu succes!"), 201
 
   except mysql.connector.errors.IntegrityError:
-    return "Cartea cu acest ISBN exista deja!", 400
+    return jsonify({'message' : 'Cartea cu acest ISBN exista deja!'}), 409
   except Exception as e:
     traceback.print_exc()
     return "Eroare necunoscuta la server!", 500
@@ -82,17 +88,16 @@ def books_route_put(ISBN):
     return "Eroare necunoscuta la server!", 500
 
 @app.route('/api/bookcollection/books/<ISBN>/', methods=['DELETE'])
-def books_rout_delete(ISBN):
+def books_route_delete(ISBN):
   try:
     isbn = ISBN
     
     book_service.delete_book(isbn)
 
-    return "Cartea s-a sters cu succes!", 200
-      
+    return jsonify({'message' : 'Cartea s-a sters cu succes!'}), 200
   except Exception as e:
       traceback.print_exc()
-      return "Eroare necunoscuta la server!", 500
+      return jsonify({'message' : 'Eroare necunoscuta la server!'}), 500
 
 #----------------------------------------------------------------
 
@@ -323,20 +328,39 @@ def get_authors_by_isbn(ISBN):
 
 #verificare daca o carte este in stoc
 #----------------------------------------------------------------  
-@app.route('/api/bookcollection/books/check-stock/<ISBN>', methods=['POST'])
-def check_book_stock(ISBN):
+@app.route('/api/bookcollection/books/check-stock/', methods=['POST'])
+def check_book_stock():
   try:
-    isbn = ISBN
+    data = request.get_json()
+    print(data)
+    obj_list = ListOfBooks(**data)
+    book_service.verify_book_stock(obj_list)
 
-    if book_service.verify_book_stock(isbn):
-      return "Stock-ul este suficient!", 200
-    else:
-      return "Stock-ul este insuficient!", 404
-
-
+    return "Stock-ul este suficient!", 200
+  except OutOfStockException as e:
+    return e.message, 406
   except Exception as e:
       traceback.print_exc()
       return "Eroare necunoscuta la server!", 404
+#----------------------------------------------------------------  
+
+
+#obtin detaliile importante pentru o carte(nume, autori, librarie, pret)
+#----------------------------------------------------------------  
+@app.route('/api/bookcollection/books/details/<ISBN>', methods=['GET'])
+def get_book_details(ISBN):
+  try:
+    isbn = ISBN
+
+    details = book_service.get_book_details(isbn)
+
+    return jsonify(details), 200
+
+  except BookNotFoundException as e:
+     return e.message, 404
+  except Exception as e:
+      traceback.print_exc()
+      return "Eroare necunoscuta la server!", 500
 #----------------------------------------------------------------  
 
 
